@@ -10,7 +10,7 @@ def is_number(s):
     except ValueError:
         return False
 
-# Hàm tách biểu thức thành các phần phần tử và kiểm tra số âm và số thập phân có trong biểu thức
+# Hàm tách biểu thức thành các phần phần tử thành 1 list
 def devide_and_check_number(equation):
     numlist = [ ]
     num = ""
@@ -74,12 +74,13 @@ def check_negative_and_decimal(numlist):
             #numlist = temp
             #break       
     numlist = temp                 
-    print(numlist)
+    #print(numlist)
     return numlist
 
 # Xử lý theo thuật toán Shunting Yard 
 def shunting_yard_algorithm(numlist):
     priority = {"+":1, "-":1, "*":2, "/":2, "^":3}
+    digitlist = []
     for digit in numlist:
             if (digit.isdigit()):  
                 digitlist.append(digit)  
@@ -116,6 +117,7 @@ def solve_equation(digitlist):
     value = 0
     while value < len(digitlist):
         if(len(digitlist) == 1):
+            #digitlist = []
             break
         for digit in (digitlist):
         #digit = digitlist[value]
@@ -166,8 +168,9 @@ def solve_equation(digitlist):
                 value = digitlist[-1]
             else:
                 break
-            result = digitlist[-1]
+            result = digitlist[-1]           
             break
+    #digitlist = []
     return round(result, 5) # Làm tròn kết quả với 3 chữ số thập phân
 
 # Giải biểu thức ra kết quả với 1 giá trị x bất kì:
@@ -198,8 +201,8 @@ def solve_simple_equation(expression):
     while (temp_result > error):
         x = x - ((solve_equation_with_x(expression, x))/derivative(expression, x, delta=0.001))
         temp_result = solve_equation_with_x(expression, x) 
-    result_x = temp_result   
-    return result_x
+    result_x = x  
+    return round(result_x, 3)
  # In ra màn hình kết quả để kiểm tra trong quá trình chạy code:
 
 #print()
