@@ -2,6 +2,12 @@
 digitlist = [] # Mảng chứa chính để xử lý thuật toán
 operatorlist = [] # Mảng chứa dấu
 calculate = []
+resultlist = [] # Lưu các kết quả sau khi tìm x
+expression_2 = 0
+
+#---------------------------------------------------------
+# Các hàm xử lý biểu thức (tách, kiểm tra, tính toán)
+#---------------------------------------------------------
 # Hàm kiểm tra có phải là 1 số không
 def is_number(s): 
     try:
@@ -37,7 +43,7 @@ def check_negative_and_decimal(numlist):
         #print('') # Khoảng trắng
         #print('\nVị trí index trong vòng này là >>', index, ',' ' Ứng với ký tự >> ',numlist[index])
         if (numlist[index] == '-'): # Kiểm tra ký tự là dấu âm hay dấu trừ
-            if (index == 0 or numlist[index-1] in "+-*/^"): # Xử lý số âm
+            if (index == 0 or numlist[index-1] in "+-*/^()"): # Xử lý số âm
                 if (numlist[index+2] == '.'):
                     temp.append(numlist[index] + numlist[index+1] + numlist[index+2]+ numlist[index+3]) 
                     index += 4                   
@@ -151,7 +157,10 @@ def solve_equation(digitlist):
             elif (temp[-1] == "/"):
                 a = float(temp[0])
                 b = float(temp[1])
-                c = a / b
+                try:
+                    c = a / b
+                except ZeroDivisionError:
+                    print("Lỗi chia cho 0 !")
             elif (temp[-1] == "^"):
                 a = float(temp[0])
                 b = float(temp[1])
@@ -173,6 +182,9 @@ def solve_equation(digitlist):
     #digitlist = []
     return round(result, 5) # Làm tròn kết quả với 3 chữ số thập phân
 
+#---------------------------------------------------------
+# Phần chính để giải phương trình
+#---------------------------------------------------------
 # Giải biểu thức ra kết quả với 1 giá trị x bất kì:
 def solve_equation_with_x(expression, x):
     temp_expression = []
@@ -180,44 +192,104 @@ def solve_equation_with_x(expression, x):
     if "=" in expression:
         i = expression.find("=")
         temp_expression = temp_expression[:i] + "-(" + temp_expression[i+1:] + ")"
-        temp_expression = temp_expression.replace('x', str(x))
+    temp_expression = temp_expression.replace('x', str(x))
     # Đặt 1 tên biến để đỡ rối :)))
     temp_expression = devide_and_check_number(temp_expression)
+    #print('Sau khi tách thành list:\n',temp_expression)             ########################################################################################
     temp_expression = check_negative_and_decimal(temp_expression)
-    temp_expression = shunting_yard_algorithm(temp_expression)
+    #print('Sau khi check số âm và số thập phân:\n',temp_expression) ########################################################################################
+    temp_expression = shunting_yard_algorithm(temp_expression) 
+    #print('Sau khi sắp sếp các phần tử theo thuật toán Shunting Yard:\n',temp_expression) ##################################################################
     result = solve_equation(temp_expression)
     return result
 
 # Tính đạo hàm của biểu thức với 1 x bất kì:
-def derivative(expression, x, delta=0.001): 
-    return (solve_equation_with_x(expression, x+delta) - solve_equation_with_x(expression, x))/delta
+def derivative(expression, x, delta = 0.001): 
+    a = solve_equation_with_x(expression, x+delta)
+    b = solve_equation_with_x(expression, x)
+    c = (a - b)/delta
+    return c
 
-# Giải phương trình theo phương pháp Newton-Raphson:
+# Hàm xuất ra 1 kết quả khi thế 1 x bất kì vào biểu thức:
 def solve_simple_equation(expression):
     error = 0.00000000000001
-    x = 0.5
+    x = 0.5   
     temp_result = 1 
+    c = None
     result_x = 0  
-    while (temp_result > error):
-        x = x - ((solve_equation_with_x(expression, x))/derivative(expression, x, delta=0.001))
-        temp_result = solve_equation_with_x(expression, x) 
-    result_x = x  
-    return round(result_x, 3)
- # In ra màn hình kết quả để kiểm tra trong quá trình chạy code:
+    while (abs(temp_result) > error): # Khi nào sai số gần bằng 0 thì out ra khỏi loop
+            a = solve_equation_with_x(expression, x)
+            b = derivative(expression, x, delta=0.001)
+            if (b == 0): 
+                x = None
+                break
+            try:
+                c = a/b
+                x = x - c 
+            except ZeroDivisionError: # Trường hợp chia cho 0
+                break
+            #x=x-((solve_equation_with_x(expression, x))/derivative(expression, x, delta=0.001))
+            try:
+               temp_result = solve_equation_with_x(expression, x)        
+            except ZeroDivisionError: # Trường hợp chia cho 0
+                break  
+    if (x != None):   
+        result_x = round(x, 4)  
+        return result_x # Trả về nghiệm x
+    else:
+        return None
 
-#print()
-#print("")
-#print(temp) 
-#print(c)
-#print(digitlist)    
-equation = input('Mời nhập biểu thức >> ')
+# Tạo phương trình tính mới để tính nghiệm thứ n và kiểm tra phương trình vừa tạo có bằng 1 không:
+def new_equation(expression, resultlist):
+    temp_new = ''
+    digit = ''
+    #error = 0.00000001
+    for digit in resultlist:
+        temp_new += f"*(x-{digit})" #(x-xn)
+    expresion_2 = f" ({expression}) / ({temp_new[1:]}) " # (f(x)/((x-x1)*(x-x2)*(x-x3)*...*(x-xn)))
+    try:
+        temp_result = solve_equation_with_x(expresion_2, 0.5)
+    except ZeroDivisionError: # Nếu chia cho số 0
+        return None
+    if (temp_result == 1):
+        return None
+    else: 
+        return expresion_2
+    
+# Thực hiện khử dấu '=' (chuyển vế đổi dấu):
+def change_expression(expression):
+    change_expression = '' 
+    if "=" in expression:
+        i = expression.find("=")
+        change_expression = expression[:i] + "-(" + expression[i+1:] + ")"
+    return  change_expression  
+
+# Tìm nghiệm của phương trình vừa tạo:
+def solve_new_equation(expression_2):
+    temp_resultlist = []
+    result_x = 0
+    change = change_expression(expression)
+    while True:
+        result_x = solve_simple_equation(expression_2)
+        if (result_x == None):
+            break
+        else:
+            temp_resultlist.append(result_x)
+            expression_2 = new_equation(change, temp_resultlist)
+        if (expression_2 == None):
+            break
+    resultlist = temp_resultlist
+    temp_resultlist = []
+    return resultlist
+      
+#---------------------------------------------------------   
+# Phần nhập chương trình:
+#---------------------------------------------------------
+expression = input('Mời nhập biểu thức >> ')
 #expression = devide_and_check_number(equation)
-#x = 2
 #result = solve_equation_with_x(equation, x)
-result = solve_simple_equation(equation)
+result = solve_new_equation(expression)
 #numlist = check_negative_and_decimal(numlist)
 #expression = shunting_yard_algorithm(numlist)
 #result = solve_equation(digitlist)
-print('Kết quả của phép tính là >> x =',result)
-
-# Kiểm tra là phép tính bình thường hay phép tính tìm x:
+print('Kết quả của phép tính là >> x =',result) 
