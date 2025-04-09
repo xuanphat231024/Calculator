@@ -16,7 +16,7 @@ def is_number(s):
     except ValueError:
         return False
 
-# Hàm tách biểu thức thành các phần phần tử thành 1 list
+# Hàm tách biểu thức thành các phần phần tử thành 1 list:
 def devide_and_check_number(equation):
     numlist = [ ]
     num = ""
@@ -33,7 +33,7 @@ def devide_and_check_number(equation):
         #print(numlist)
     return numlist
 
-    # Kiểm tra số âm và số thập phân có trong list không
+# Kiểm tra số âm và số thập phân có trong list:
 def check_negative_and_decimal(numlist):    
     temp = [ ]
     index = 0 
@@ -44,7 +44,7 @@ def check_negative_and_decimal(numlist):
         #print('\nVị trí index trong vòng này là >>', index, ',' ' Ứng với ký tự >> ',numlist[index])
         if (numlist[index] == '-'): # Kiểm tra ký tự là dấu âm hay dấu trừ
             if (index == 0 or numlist[index-1] in "+-*/^()"): # Xử lý số âm
-                if (numlist[index+2] == '.'):
+                if (((index+2) < len(numlist)) and (numlist[index+2] == '.')):
                     temp.append(numlist[index] + numlist[index+1] + numlist[index+2]+ numlist[index+3]) 
                     index += 4                   
                 else:
@@ -72,7 +72,7 @@ def check_negative_and_decimal(numlist):
     #print(numlist)
     return numlist
 
-# Xử lý theo thuật toán Shunting Yard 
+# Xử lý theo thuật toán Shunting Yard:
 def shunting_yard_algorithm(numlist):
     priority = {"+":1, "-":1, "*":2, "/":2, "^":3}
     digitlist = []
@@ -126,32 +126,26 @@ def solve_equation(digitlist):
                 del digitlist[start:(i+1)]
                 # break
             # Phép tính với 2 số            
-            try:
-                if (temp[-1] == "+"):
-                    a = float(temp[0])
-                    b = float(temp[1])
-                    c = a + b
-                elif (temp[-1] == "-"):
-                    a = float(temp[0])
-                    b = float(temp[1])
-                    c = a - b
-                elif (temp[-1] == "*"):
-                    a = float(temp[0])
-                    b = float(temp[1])
-                    c = a * b
-                elif (temp[-1] == "/"):
-                    a = float(temp[0])
-                    b = float(temp[1])
-                    #try:
-                    c = a / b
-                    #except ZeroDivisionError:
-                        #print("Lỗi chia cho 0 !")
-                elif (temp[-1] == "^"):
-                    a = float(temp[0])
-                    b = float(temp[1])
-                    c = a ** b 
-            except ValueError:
-                break  
+            if (temp[-1] == "+"):
+                a = float(temp[0])
+                b = float(temp[1])
+                c = a + b
+            elif (temp[-1] == "-"):
+                a = float(temp[0])
+                b = float(temp[1])
+                c = a - b
+            elif (temp[-1] == "*"):
+                a = float(temp[0])
+                b = float(temp[1])
+                c = a * b
+            elif (temp[-1] == "/"):
+                a = float(temp[0])
+                b = float(temp[1])               
+                c = a / b
+            elif (temp[-1] == "^"):
+                a = float(temp[0])
+                b = float(temp[1])
+                c = a ** b   
             # Thêm kết quả vừa tính vào list digitlist và reset lại cái biến
             digitlist.insert((position), c)   
             #i = 0
@@ -166,9 +160,6 @@ def solve_equation(digitlist):
                 break
             result = digitlist[-1]           
             break
-    if (len(digitlist) > 1):
-        print("Lỗi phép tính !")
-        result = None
     #digitlist = []
     return round(result, 9) # Làm tròn kết quả với 10 chữ số thập phân
     #return result
@@ -184,7 +175,7 @@ def solve_equation_with_x(expression, x):
         i = expression.find("=")
         temp_expression = temp_expression[:i] + "-(" + temp_expression[i+1:] + ")"
     temp_expression = temp_expression.replace('x', str(x))
-    # Đặt 1 tên biến để đỡ rối :)))
+    # Đặt 1 tên biến để đỡ rối :))) ai ngờ vẫn rối 
     temp_expression = devide_and_check_number(temp_expression)
     #print('Sau khi tách thành list:\n',temp_expression)             ########################################################################################
     temp_expression = check_negative_and_decimal(temp_expression)
@@ -205,7 +196,8 @@ def derivative(expression, x, delta = 0.0001):
 def solve_simple_equation(expression):
     error = 0.0000000000001
     index_loop = 0    
-    x = 0.5   
+    x = 0.5
+    x_new = 0   
     temp_result = 1 
     c = None
     result_x = 0  
@@ -217,18 +209,25 @@ def solve_simple_equation(expression):
                 break
             try:
                 c = a/b
-                x = x - c 
+                x = x - c
+                
             except ZeroDivisionError: # Trường hợp chia cho 0
-                break           
+                x = None
+                break
+            if ((x != None) and (abs(x_new - x) < 0.0000000000001) and (abs(round(x, 5) != 0))):
+                x = 9999
+                break
+
+            x_new = x 
             try:
                temp_result = solve_equation_with_x(expression, x)        
             except ZeroDivisionError: # Trường hợp chia cho 0
                 break 
             index_loop += 1
-            if (index_loop >= 10000 and abs(round(x, 2)) != 0):
+            if (index_loop >= 20000 and abs(round(x, 5)) != 0):
                 x = 9999
                 break
-            if (index_loop >= 10000 and abs(round(x, 2)) == 0):
+            elif (index_loop >= 20000 and abs(round(x, 5)) == 0):
                 x = 0
                 break    
     if (x != None and x != 9999):  # Trường hợp có nghiệm
@@ -294,24 +293,127 @@ def solve_new_equation(expression_2):
     return resultlist
 
 # Kiểm tra phép tính bình thường hay phép tính có chứa x:
-def check_expression(expression):
+def check_expression_to_solve(expression):
     if 'x' in expression:
         return 1
     else:
         return 0  
-       
+
+# Kiểm tra cú pháp biểu thức nhập vào có hợp lệ không:
+def check_valid_of_expression(expression):
+    j = 0
+    k = 0
+    i = 0
+    check = 0
+    temp_expression = devide_and_check_number(expression)
+    temp_expression = check_negative_and_decimal(temp_expression)
+
+    # Số lượng phần tử trong 1 biểu thức là 1 số lẻ:
+    if (len(temp_expression) % 2 != 0):
+        pass
+    else:
+        check = 10
+        return check
+
+    # Kiểm tra các ký tự cơ bản:
+    for char in temp_expression:
+        if ((temp_expression [-1] in "+-*/^(=") or (temp_expression [0] in "+*/^=")):
+            check = 10
+            return check
+        if ((char not in "+-*/^()x.0123456789= ")): 
+            if (is_number(char)):
+                pass
+            else:
+                check = 10
+                return check
+            
+    # Kiểm tra các ký tự xuất hiện trong biểu thức:
+    
+    # Kiểm tra xung quanh ký tự x:
+    if (check != 10):
+        temp_check = check_expression_to_solve(expression)
+        if (temp_check == 0):
+            check = 1
+        else:
+            #temp_check lúc này sẽ là 1.           
+            #temp_expression = devide_and_check_number(expression)
+            for i, char in enumerate(temp_expression):                         
+                if (char == 'x'):                   
+                    #i = temp_expression.index(char)                   
+                    if (i == 0):
+                        continue
+                    elif ((temp_expression[i-1] == ")") or (temp_expression[i-1].isdigit()) or ((i + 1) < len(temp_expression) and temp_expression[i+1].isdigit())):                       
+                        check = 10
+                        return check 
+                    else:
+                        check = 2
+                # Kiểm tra ký tự đằng sau dấu ')':
+                if (char == ')'):
+                    if (((i+1) < len(temp_expression)) and (temp_expression[i+1] not in "+-*/^")):
+                        check = 10
+                        return check
+                # Lỗi gõ nhiều toán tử liên tiếp:
+                if (char in "+-*/^"):
+                    if (((i+1) < len(temp_expression)) and (temp_expression[i+1] in "+*/^")):
+                        check = 10
+                        return check
+                # Lỗi đằng sau dấu âm hoặc trừ là 1 toán tử:
+                if ((char == '-') and ((i+1) < len(temp_expression)) and (temp_expression[i+1] in "+*/^)")):
+                    check = 10
+                    return check
+
+
+    # Kiểm tra số lượng ký tự '(' và ký tự ')':
+    if (check != 10):
+        for char in temp_expression:                   
+            if (char == '('):
+                j += 1
+            elif (char == ')'):
+                k += 1
+        if (j == k):
+            pass
+        else:
+            check = 10
+            return check
+    # Kiểm tra dấu '='
+    if (check != 10):
+        if (("=" not in temp_expression) and ("x" in temp_expression)):
+            check = 3
+            
+    return check       
+         
 #---------------------------------------------------------   
 # Phần nhập chương trình:
+# Lưu ý khi nhập biểu thức có chứa x cần có dấu * trước x nếu trước đó là 1 số hoặc 1 dấu đóng ngoặc ")"
+# Ví dụ: 4x = 0 --> cần nhập 4*x = 0
 #---------------------------------------------------------
 while True:
-    expression = input('Mời nhập biểu thức >> ')
-    check = check_expression(expression)
-    if (check == 0):
-        result = solve_equation_with_x(expression, 0.5)
-        print('Kết quả của phép tính là >>',result)
-    else:
+    expression = input ('Mời nhập biểu thức >> ')        
+    check = check_valid_of_expression (expression)
+    #------------------------------------------------------
+    # Giải biểu thức bình thường  
+    if (check == 1):       
+        result = solve_equation_with_x (expression, 0.5)
+        print ('Kết quả của phép tính là >>',result)
+    #------------------------------------------------------
+    # Giải biểu thức chứa x
+    elif (check == 2):           
         result = solve_new_equation(expression) 
         if (result == 'Phương trình vô nghiệm !'):
-            print(result)
+            print (result)
         else:
-            print('Kết quả của phép tính là >> x =',result)
+            print ('Kết quả của phép tính là >> x =',result)
+    #------------------------------------------------------
+    # Giải biểu thức chứa x với x tùy chọn từ người dùng:
+    elif (check == 3): 
+        x_value = input ('Nhập một giá trị x đi >> ')
+        result = solve_equation_with_x (expression, x_value)
+        print ('Kết quả của phép tính với x = {0} là >> {1}'.format(x_value, result))
+    #------------------------------------------------------
+    # Thông báo người dùng biểu thức nhập vào không đúng cú pháp:
+    else:
+        print('Biểu thức nhập không đúng cú pháp, nhập lại đi ông !')
+        
+
+
+ 
